@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Love Letter Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body { margin: 0; font-family: 'Quicksand', sans-serif; background: #ffeef4; text-align: center; }
+    h1 { margin-top: 20px; font-size: 32px; color: #d98ebc; }
+    #game { display: grid; grid-template-columns: repeat(10, 50px); grid-template-rows: repeat(10, 50px); margin: 20px auto; width: 500px; height: 500px; border: 2px solid #d8a7b1; background-color: #fceef2; }
+    .tile { width: 50px; height: 50px; box-sizing: border-box; border: 1px solid #f8cbd5; display: flex; align-items: center; justify-content: center; font-size: 24px; background-size: cover; }
+    .player { background-color: #ffb6c1; }
+    .gift { background-color: #fff0b3; }
+    #messageBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border: 2px solid #e1b0cb; border-radius: 12px; padding: 20px; z-index: 10; max-width: 300px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 5; }
+    button { margin-top: 10px; padding: 6px 12px; background-color: #f7cce2; border: none; border-radius: 6px; cursor: pointer; transition: transform 0.2s ease; }
+    button:hover { transform: scale(1.05); background-color: #e8aed0; }
+  </style>
+</head>
+<body>
+<h1> Happy Birthday, David my love! 💖🎁</h1>
+<div id="game"></div>
+<div id="overlay"></div>
+<div id="messageBox">
+  <div id="message"></div>
+  <button onclick="closeMessage()">Close</button>
+</div>
+
+<script>
+const game = document.getElementById('game');
+const gridSize = 10;
+let playerPos = { x: 0, y: 0 };
+
+const giftMessages = [
+  "I love your smile, your smell, your laugh & everything about you!!!!!",
+  "Thank you for being my forever home.",
+  "You make me soooo happpyyy.", 
+  "Ich liebe dich, mein Schatz, mein mann.",
+  "You are my sunshine, my only sunshine.",
+  "Ich will heiraten dich inshaAllah meine liebe.",
+  "You are such a sunshine, David.", 
+  "Thank you for being my rock & always holding me strong.",
+  "Oh, look at this hottie reading this message.", 
+  "Did i tell you that I cannot wait to do life with you?",
+  "Come here, let me huggy huggy", 
+  "Babeee, kissy kissy", 
+  "I love you David.", 
+  "Boyfie, I am sooooo grateful for having you in my life.",
+  "Schatz, you are such a blessing in my life.",
+  "Lao gong, I wish i could tell you how much I love you.",
+  "bbgurllll, my smartie, my cutie, my love."  , 
+  "David, Happy Brithday Babe!", 
+  "Oh, my boi is 21!!! can you do some for me?",
+  "I wish i could cuddle with you, hold your hands, give you soft kisses and play with your hair.",
+  "I love you so much, I love you so much, I love you so much.",
+  "Your presence feels like the sunlight on days when I feel like I am in the dark.",
+  "I cannot wait to live life with you, go groceries with you, talk to our parents and just exist with you together.",
+
+];
+let gifts = [];
+
+
+function getRandomSubset(array, size) {
+  const shuffled = array.slice().sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, size);
+}
+
+function placeGifts() {
+  gifts = [];
+  const selectedMessages = getRandomSubset(giftMessages, 15);
+  const positions = new Set();
+  while (gifts.length < selectedMessages.length) {
+    let x = Math.floor(Math.random() * gridSize);
+    let y = Math.floor(Math.random() * gridSize);
+    let key = `${x},${y}`;
+    if (key !== "0,0" && !positions.has(key)) {
+      positions.add(key);
+      gifts.push({ x, y, message: selectedMessages[gifts.length] });
+    }
+  }
+}
+
+
+
+const popSound = new Audio('audio/pop.mp3');
+
+function drawGrid() {
+  game.innerHTML = '';
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      const tile = document.createElement('div');
+      tile.classList.add('tile');
+
+      if (x === playerPos.x && y === playerPos.y) tile.classList.add('player');
+      else if (gifts.some(g => g.x === x && g.y === y)) tile.classList.add('gift');
+
+      game.appendChild(tile);
+    }
+  }
+}
+
+function movePlayer(dx, dy) {
+  const newX = playerPos.x + dx;
+  const newY = playerPos.y + dy;
+  if (newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize) {
+    playerPos.x = newX;
+    playerPos.y = newY;
+
+    // if no gifts left, player cannot move & show message
+    if (gifts.length === 0){
+        showMessage("You have found all the gifts my cutie!");
+       
+      setTimeout(() => {
+        confetti({
+          particleCount: 200,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+        }, 300);
+        return;
+    }
+
+    checkGift();
+    drawGrid();
+  }
+}
+
+function checkGift() {
+  const giftIndex = gifts.findIndex(g => g.x === playerPos.x && g.y === playerPos.y);
+  if (giftIndex > -1) {
+    const msg = gifts[giftIndex].message;
+    gifts.splice(giftIndex, 1);
+    popSound.play();
+    showMessage(msg);
+    
+    
+  }
+}
+
+function showMessage(text) {
+  document.getElementById('message').innerText = text;
+  document.getElementById('messageBox').style.display = 'block';
+  document.getElementById('overlay').style.display = 'block';
+}
+
+function closeMessage() {
+  document.getElementById('messageBox').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp') movePlayer(0, -1);
+  if (e.key === 'ArrowDown') movePlayer(0, 1);
+  if (e.key === 'ArrowLeft') movePlayer(-1, 0);
+  if (e.key === 'ArrowRight') movePlayer(1, 0);
+});
+
+drawGrid();
+placeGifts();
+</script>
+</body>
+</html>
